@@ -1,6 +1,8 @@
 # UpGoal
 Accountability Platform
 
+![Jokes Card](https://readme-jokes.vercel.app/api)
+
 ## I. Introduction
 - A decentralized application (DAPP) to encourage goal achievement through token staking
 - Users stake tokens on goals and earn rewards for successful completion
