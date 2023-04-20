@@ -4,12 +4,12 @@ An accountability platform; reach your goals and take responsibility for your pr
 ![Jokes Card](https://readme-jokes.vercel.app/api)
 
 ## introduction  
-UpGoaled is decentralized web application designed to offer a transparent and secure environment for goal tracking and accomplishment verification. The platform incorporates tokenized rewards to encourage users to remain committed to their goals, fostering a sense of community through shared incentives.
+UpGoaled is a decentralized web application designed to offer a transparent and secure environment for goal tracking and accomplishment verification. The platform incorporates tokenized rewards to encourage users to remain committed to their goals, fostering a sense of community through shared incentives.
 
 ## Key Features
 1. User Management: Users can create an account and manage their personal goals.
 
-2. Goal Creation and Management: Users can create goals, track progress. 
+2. Goal Selection and Management: Users can join goals events, and track their progress. 
 
 3. Staking: Users can pledge funds towards their goals as a commitment. If they complete the goal, they will get their pledged funds back. If they fail to complete the goal, they will not receive the funds they staked.
 
