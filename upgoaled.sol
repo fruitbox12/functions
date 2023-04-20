@@ -1,13 +1,12 @@
-// last modified 9:00am 18/04/2023
+// last modified 1:00pm 20/04/2023
+// updated stake tracking 
 // SPDX-License-Identifier: MIT
-
-// This is the (MVP) contract. The goal and pool abnd goals can only be created by the contract owner 
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract UpGold is Ownable {
+contract UpGoaled is Ownable {
     // User struct to store user information
     struct User {
         string userId; // Use the username as the user ID
@@ -129,6 +128,9 @@ contract UpGold is Ownable {
 
         // Update the stakedAmount in the goalParticipations mapping
         goalParticipations[_userId][_goalId].stakedAmount = _stake;
+
+        // Update the total stake for the goal in the goals mapping
+        goals[_goalId].stake += _stake;
 
         emit UserJoinedGoal(_userId, _goalId, _stake);
 
