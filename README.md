@@ -1,4 +1,4 @@
-# UpGoal
+# UpGoal 🏁
 Accountability Platform
 
 ![Jokes Card](https://readme-jokes.vercel.app/api)
