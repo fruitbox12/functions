@@ -16,7 +16,7 @@ B. Goal Pools
 - Create up to "X" goal pools can be created by the contract owner
 - Each goal pool contains a list of goals
 
-C. Goals
+C. Goals 💼
 - Contract owner creates goals with a title and associates them with a goal pool
 - Users can suggest and propose goals
 - Users can join goals and stake tokens
