@@ -1,5 +1,5 @@
 # UpGoaled 🏁
-Accountability Platform; Reach your goals and hold yourself accountable.
+An accountability platform; reach your goals and take responsibility for your progress.
 
 ![Jokes Card](https://readme-jokes.vercel.app/api)
 
