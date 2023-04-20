@@ -1,5 +1,5 @@
 # UpGoal 🏁
-Accountability Platform
+Accountability Platform; Reach your goals and hold yourself accountable.
 
 ![Jokes Card](https://readme-jokes.vercel.app/api)
 
