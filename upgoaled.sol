@@ -1,7 +1,7 @@
-// last modified 10:27am 20/04/2023
+// last modified 9:00am 18/04/2023
 // SPDX-License-Identifier: MIT
 
-// This is the (MVP) contract. The goal and pool abnd goals can only be created by the  contract owner 
+// This is the (MVP) contract. The goal and pool abnd goals can only be created by the contract owner 
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract UpGold is Ownable {
     // User struct to store user information
     struct User {
-        string userId; // Use the username as the user ID (may be a redudant feature to take out later_)
+        string userId; // Use the username as the user ID
         address userAddress; // Wallet address of the user
         uint[] goals; // List of goal IDs associated with the user
     }
@@ -91,9 +91,11 @@ contract UpGold is Ownable {
     }
 
     // Function to create a new user with a username, wallet address, and USDC token address
-    function createUser(string memory _name, address _userAddress, address _tokenAddress) public userNotCreated(_userAddress) {
+    function createUser(string memory _name, address _userAddress, address _TokenAddress) public userNotCreated(_userAddress) {
         // Check if the user's wallet has more than 50 USDC tokens
-        // import reputation check here
+        IERC20 USDCToken = IERC20(_TokenAddress);
+        uint userTokenBalance = USDCToken.balanceOf(_userAddress);
+        require(userTokenBalance >= 5, "User must have at least 50 USDC tokens");
 
         userCount++;
         string memory userId = _name; // Use the username as the user ID
@@ -105,8 +107,7 @@ contract UpGold is Ownable {
     }
 
      // Function for users to join a goal and stake tokens
-   
- function joinGoalAndStake(uint _goalId, uint _stake, address _tokenAddress, uint _userId) public {
+    function joinGoalAndStake(uint _goalId, uint _stake, address _tokenAddress, uint _userId) public {
         // Ensure the user has not already participated in the goal
         require(!userParticipatedInGoal[_userId][_goalId], "User has already participated in the goal");
 
@@ -180,7 +181,6 @@ contract UpGold is Ownable {
                 successfulParticipants++;
             }
         }
-
         // Calculate the user's share of the rewards
         uint userRewardShare = totalFailedStake / successfulParticipants;
 
@@ -193,5 +193,4 @@ contract UpGold is Ownable {
 
        emit RewardsClaimed(_userId, _goalId);
     }
-
 }
