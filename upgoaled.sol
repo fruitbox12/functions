@@ -1,5 +1,8 @@
-// last modified 7:00pm 20/04/2023
+// last modified 8:18am 21/04/2023
 // SPDX-License-Identifier: MIT
+
+// added goal description 
+
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -14,8 +17,9 @@ contract UpGoaled is Ownable {
     }
 
     // Goal struct to store goal information
-    struct Goal {
+   struct Goal {
         string title;
+        string description; 
         uint stake;
         bool completed;
         uint totalFailedStake;
@@ -57,7 +61,7 @@ contract UpGoaled is Ownable {
     // Events
     event UserCreated(uint indexed userId, string name, address userAddress);
     event GoalPoolCreated(uint indexed goalPoolId, string name);
-    event GoalCreated(uint indexed goalId, string title, uint stake, uint goalPoolId);
+    event GoalCreated(uint indexed goalId, string title, string description, uint stake, uint goalPoolId);
     event GoalFailed(uint indexed userId, uint indexed goalId);
     event PassedGoal(uint indexed userId, uint indexed goalId);
     event RewardsClaimed(uint indexed userId, uint indexed goalId);
@@ -79,16 +83,17 @@ contract UpGoaled is Ownable {
     emit GoalPoolCreated(goalPoolCount, _name);
     }
     // Function to create a new goal with a title, and goal pool ID
-    function createGoalOwner(string memory _title, uint _goalPoolId) public onlyOwner {
+    function createGoalOwner(string memory _title, string memory _description, uint _goalPoolId) public onlyOwner {
         require(goalPools[_goalPoolId].goals.length < MAX_GOALS_PER_POOL, "Maximum number of goals per pool reached");
 
         goalCount++;
-        goals[goalCount] = Goal(_title, 0, false, 0, 0, new uint[](0));
+        goals[goalCount] = Goal(_title, _description, 0, false, 0, 0, new uint[](0));
 
         goalPools[_goalPoolId].goals.push(goalCount);
 
-        emit GoalCreated(goalCount, _title, 0, _goalPoolId);
+        emit GoalCreated(goalCount, _title, _description, 0, _goalPoolId);
     }
+
 
     // Function to create a new user with a username, wallet address, and USDC token address
     function createUser(string memory _name, address _userAddress, address _TokenAddress) public userNotCreated(_userAddress) {
