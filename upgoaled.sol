@@ -1,5 +1,4 @@
-// last modified 4:30pm 20/04/2023
-// updated stake tracking 
+// last modified 7:00pm 20/04/2023
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -16,10 +15,12 @@ contract UpGoaled is Ownable {
 
     // Goal struct to store goal information
     struct Goal {
-        string title; // Title of the goal
-        uint stake; // Amount of stake for the goal
-        uint[] participants; // List of user IDs participating in the goal
-        bool completed; // Whether the goal is completed
+        string title;
+        uint stake;
+        bool completed;
+        uint totalFailedStake;
+        uint successfulParticipants;
+        uint[] participants;
     }
 
     // GoalPool struct to store goal pool information
@@ -32,6 +33,7 @@ contract UpGoaled is Ownable {
     struct GoalParticipation {
         uint stakedAmount;
         bool failed;
+        bool passed;
         bool rewardsClaimed;
     }
 
@@ -52,12 +54,12 @@ contract UpGoaled is Ownable {
     mapping(string => bool) public usernameUsed;
     mapping(uint => mapping(uint => bool)) public userParticipatedInGoal;
     
-
     // Events
     event UserCreated(uint indexed userId, string name, address userAddress);
     event GoalPoolCreated(uint indexed goalPoolId, string name);
     event GoalCreated(uint indexed goalId, string title, uint stake, uint goalPoolId);
     event GoalFailed(uint indexed userId, uint indexed goalId);
+    event PassedGoal(uint indexed userId, uint indexed goalId);
     event RewardsClaimed(uint indexed userId, uint indexed goalId);
     event UserJoinedGoal(uint indexed userId, uint indexed goalId, uint stake);
 
@@ -77,12 +79,11 @@ contract UpGoaled is Ownable {
     emit GoalPoolCreated(goalPoolCount, _name);
     }
     // Function to create a new goal with a title, and goal pool ID
-    // This function can only be called by the contract owner
     function createGoalOwner(string memory _title, uint _goalPoolId) public onlyOwner {
         require(goalPools[_goalPoolId].goals.length < MAX_GOALS_PER_POOL, "Maximum number of goals per pool reached");
 
         goalCount++;
-        goals[goalCount] = Goal(_title, 0, new uint[](0), false);
+        goals[goalCount] = Goal(_title, 0, false, 0, 0, new uint[](0));
 
         goalPools[_goalPoolId].goals.push(goalCount);
 
@@ -147,16 +148,33 @@ contract UpGoaled is Ownable {
         // Update the failed status in the goalParticipations mapping
         goalParticipations[_userId][_goalId].failed = true;
 
+        // Increment the totalFailedStake for the goal
+        goals[_goalId].totalFailedStake += goalParticipations[_userId][_goalId].stakedAmount;
+
         emit GoalFailed(_userId, _goalId);
     }
-    // Function to mark a goal as completed
-    function markGoalAsCompleted(uint _goalId) public onlyOwner {
+    
+    // Function to mark a user as having passed the goal
+    function passGoal(uint _userId, uint _goalId) public onlyOwner {
+        // Ensure the user has participated in the goal
+        require(userParticipatedInGoal[_userId][_goalId], "User must have participated in the goal");
+
         // Ensure the goal is not already completed
         require(!goals[_goalId].completed, "Goal must not be completed");
 
-        // Set the goal as completed
-        goals[_goalId].completed = true;
+        // Ensure the user has not already been marked as failed
+        require(!goalParticipations[_userId][_goalId].failed, "User must not be marked as failed");
+
+        // Mark the user as passed in the goalParticipations mapping
+        goalParticipations[_userId][_goalId].passed = true;
+
+        // Increment the successfulParticipants count for the goal
+        goals[_goalId].successfulParticipants++;
+
+        // You may also choose to emit an event here, similar to the GoalFailed event
+        emit PassedGoal(_userId, _goalId);
     }
+    
     // Function to allow a user to claim rewards after completing a goal
     function claimRewards(uint _userId, uint _goalId, address _tokenAddress) public {
         // Ensure the goal is completed
@@ -172,27 +190,22 @@ contract UpGoaled is Ownable {
         uint stakedAmount = goalParticipations[_userId][_goalId].stakedAmount;
         require(stakedAmount > 0, "User must have staked tokens in the goal");
 
-        // Calculate the total rewards from users who failed the goal
-        uint totalFailedStake = 0;
-        uint successfulParticipants = 0;
-        for (uint i = 0; i < goals[_goalId].participants.length; i++) {
-            uint participantId = goals[_goalId].participants[i];
-            if (goalParticipations[participantId][_goalId].failed) {
-                totalFailedStake += goalParticipations[participantId][_goalId].stakedAmount;
-            } else {
-                successfulParticipants++;
-            }
-        }
-        // Calculate the user's share of the rewards
-        uint userRewardShare = totalFailedStake / successfulParticipants;
+        // Ensure the user has passed the goal
+        require(goalParticipations[_userId][_goalId].passed, "User must have passed the goal");
 
-        // Transfer the staked tokens and the user's share of the rewards back to the user
+        // Calculate the user's share of the rewards from the failed stakes
+        uint totalFailedStake = goals[_goalId].totalFailedStake;
+        uint successfulParticipants = goals[_goalId].successfulParticipants;
+        uint userRewards = (stakedAmount + totalFailedStake) / successfulParticipants;
+
+        // Transfer the rewards to the user
         IERC20 token = IERC20(_tokenAddress);
-        token.transfer(msg.sender, stakedAmount + userRewardShare);
+        token.transfer(msg.sender, userRewards);
 
         // Update the rewardsClaimed status in the goalParticipations mapping
         goalParticipations[_userId][_goalId].rewardsClaimed = true;
 
-       emit RewardsClaimed(_userId, _goalId);
+        emit RewardsClaimed(_userId, _goalId);
     }
+   
 }
