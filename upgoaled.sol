@@ -1,4 +1,7 @@
-//last modified 10:35pm 21/04/21
+//last modified 4:30pm 22/04/21
+
+//need to comment out the block timestaamp at line 202 if you want to test the withdraw fucntion and bypass the timestamp
+
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -229,4 +232,8 @@ contract UpGoaled is Ownable {
 
         emit RewardsClaimed(_userId, _goalId);
     } 
+
+    function isGoalExpired(uint _goalId) public view returns (bool) {
+        return goals[_goalId].expiryDate <= block.timestamp;
+    }
 }
