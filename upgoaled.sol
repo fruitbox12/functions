@@ -188,7 +188,7 @@ contract UpGoaled is Ownable {
         goals[_goalId].successfulParticipants++;
 
         // Decrement the uncompletedUsersCount for the goal
-     goals[_goalId].uncompletedUsersCount--;
+        goals[_goalId].uncompletedUsersCount--;
 
         // Emit an event for passing the goal
         emit PassedGoal(_userId, _goalId);
