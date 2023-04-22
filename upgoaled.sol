@@ -1,5 +1,5 @@
-//last modified 7:35pm 21/04/21
-// SPDX-License-Identifier: MIT
+//last modified 10:35pm 21/04/21
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -15,11 +15,10 @@ contract UpGoaled is Ownable {
     }
 
     // Goal struct to store goal information
-  struct Goal {
+    struct Goal {
         string title;
         string description;
         uint stake;
-        bool completed;
         uint totalFailedStake;
         uint successfulParticipants;
         uint[] participants;
@@ -80,7 +79,7 @@ contract UpGoaled is Ownable {
     }
     // modifier to mark users who havent completed their goals as failed once the goal event expires 
     modifier markFailedIfExpired(uint _goalId) {
-        if (goals[_goalId].expiryDate <= block.timestamp && !goals[_goalId].completed) {
+        if (goals[_goalId].expiryDate <= block.timestamp) {
             markUncompletedUsersAsFailed(_goalId);
         }
         _;
@@ -99,7 +98,7 @@ contract UpGoaled is Ownable {
         require(goalPools[_goalPoolId].goals.length < MAX_GOALS_PER_POOL, "Maximum number of goals per pool reached");
 
         goalCount++;
-        goals[goalCount] = Goal(_title, _description, 0, false, 0, 0, new uint[](0), _expiryDate, 0,new uint[](0));
+        goals[goalCount] = Goal(_title, _description, 0, 0, 0, new uint[](0), _expiryDate, 0, new uint[](0));
 
         goalPools[_goalPoolId].goals.push(goalCount);
 
@@ -174,14 +173,10 @@ contract UpGoaled is Ownable {
         // Clear the uncompletedUsers array
         delete goals[_goalId].uncompletedUsers;
     }
-
     // Function to mark a user as having passed the goal
     function passGoal(uint _userId, uint _goalId) public onlyOwner markFailedIfExpired(_goalId) {
         // Ensure the user has participated in the goal
         require(userParticipatedInGoal[_userId][_goalId], "User must have participated in the goal");
-
-        // Ensure the goal is not already completed
-        require(!goals[_goalId].completed, "Goal must not be completed");
 
         // Ensure the user has not already been marked as failed
         require(!goalParticipations[_userId][_goalId].failed, "User must not be marked as failed");
@@ -193,25 +188,20 @@ contract UpGoaled is Ownable {
         goals[_goalId].successfulParticipants++;
 
         // Decrement the uncompletedUsersCount for the goal
-        goals[_goalId].uncompletedUsersCount--;
+     goals[_goalId].uncompletedUsersCount--;
 
         // Emit an event for passing the goal
         emit PassedGoal(_userId, _goalId);
     }
-    
     // Function to allow a user to claim rewards after completing a goal
     function claimRewards(uint _userId, uint _goalId, address _tokenAddress) public {
         // Ensure the goal has expired
         require(block.timestamp >= goals[_goalId].expiryDate, "Tokens can only be claimed after the goal has expired");
 
         // If the goal is expired and not completed, mark uncompleted users as failed
-        if (goals[_goalId].expiryDate <= block.timestamp && !goals[_goalId].completed) {
+        if (goals[_goalId].expiryDate <= block.timestamp){
             markUncompletedUsersAsFailed(_goalId);
         }
-
-        // Ensure the goal is completed
-        require(goals[_goalId].completed, "Goal must be completed");
-
         // Ensure the user has participated in the goal
         require(userParticipatedInGoal[_userId][_goalId], "User must have participated in the goal");
 
@@ -238,6 +228,5 @@ contract UpGoaled is Ownable {
         goalParticipations[_userId][_goalId].rewardsClaimed = true;
 
         emit RewardsClaimed(_userId, _goalId);
-    }
-   
+    } 
 }
