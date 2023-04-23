@@ -1,4 +1,4 @@
-//last modified 9:00pm 22/04/21
+//last modified 10:35pm 21/04/21
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -13,6 +13,7 @@ contract UpGoaled is Ownable {
         address userAddress; // Wallet address of the user
         uint[] goals; // List of goal IDs associated with the user
     }
+
     // Goal struct to store goal information
     struct Goal {
         string title;
@@ -24,13 +25,20 @@ contract UpGoaled is Ownable {
         uint expiryDate;
         uint uncompletedUsersCount;
         uint[] uncompletedUsers;
-        bool expiredAndRewardsClaimed;
+
+        uint[] distance;
+        uint[] time;
+        string activity_title;
+
+
     }
+
     // GoalPool struct to store goal pool information
     struct GoalPool {
         string name; // Name of the goal pool
         uint[] goals; // List of goal IDs in the goal pool
     }
+
     // GoalParticipation struct to store staked amounts, failed stakes, and claimed rewards
     struct GoalParticipation {
         uint stakedAmount;
@@ -42,6 +50,10 @@ contract UpGoaled is Ownable {
     uint public userCount; // Counter for the total number of users
     uint public goalCount; // Counter for the total number of goals
     uint public goalPoolCount; // Counter for the total number of goal pools
+
+    string public constant HARDCODED_ACTIVITY_NAME = "Run 30 miles in 2 hours";
+    uint public constant HARDCODED_ACTIVITY_DISTANCE = 30; // in miles
+    uint public constant HARDCODED_ACTIVITY_ELAPSED_TIME = 2; // in hours
 
     // Maximum number of goal pools allowed
     uint public constant MAX_GOAL_POOLS = 3;
@@ -96,7 +108,7 @@ contract UpGoaled is Ownable {
         require(goalPools[_goalPoolId].goals.length < MAX_GOALS_PER_POOL, "Maximum number of goals per pool reached");
 
         goalCount++;
-        goals[goalCount] = Goal(_title, _description, 0, 0, 0, new uint[](0), _expiryDate, 0, new uint[](0), false);
+        goals[goalCount] = Goal(_title, _description, 0, 0, 0, new uint[](0), _expiryDate, 0, new uint[](0));
 
         goalPools[_goalPoolId].goals.push(goalCount);
 
@@ -120,8 +132,6 @@ contract UpGoaled is Ownable {
     }
     // Function for users to join a goal and stake tokens
     function joinGoalAndStake(uint _goalId, uint _stake, address _tokenAddress, uint _userId) public userExists(_userId) {
-        require(!goals[_goalId].expiredAndRewardsClaimed, "Cannot join an expired goal");
-        
         // Add the user to the uncompleted users mapping
         goals[_goalId].uncompletedUsers.push(_userId);
 
@@ -155,50 +165,70 @@ contract UpGoaled is Ownable {
 
         emit UserJoinedGoal(_userId, _goalId, _stake);
     }
-    //Function to check goal expiry date and mark uncompleted users as failed 
-    function markUncompletedUsersAsFailed(uint _goalId) public onlyOwner {
-        require(goals[_goalId].expiryDate <= block.timestamp, "Goal must be expired");
-
-        uint[] storage uncompletedUsersArray = goals[_goalId].uncompletedUsers;
     
-        for (uint i = 0; i < uncompletedUsersArray.length; i++) {
-            uint userId = uncompletedUsersArray[i];
+function markUncompletedUsersAsFailed(uint _goalId) public onlyOwner {
+    require(goals[_goalId].expiryDate <= block.timestamp, "Goal must be expired");
+
+    uint[] storage uncompletedUsersArray = goals[_goalId].uncompletedUsers;
+
+    for (uint i = 0; i < uncompletedUsersArray.length; i++) {
+        uint userId = uncompletedUsersArray[i];
+
+        // Hardcoded user activity data
+        string memory userActivityName = HARDCODED_ACTIVITY_NAME;
+        uint userActivityDistance = HARDCODED_ACTIVITY_DISTANCE;
+        uint userActivityElapsedTime = HARDCODED_ACTIVITY_ELAPSED_TIME;
+
+        // Check conditions based on hardcoded data
+        if (keccak256(abi.encodePacked(userActivityName)) != keccak256(abi.encodePacked(goals[_goalId].title)) ||
+            userActivityElapsedTime > goals[_goalId].expiryDate ||
+            userActivityDistance < goals[_goalId].stake) {
 
             goalParticipations[userId][_goalId].failed = true;
             goals[_goalId].totalFailedStake += goalParticipations[userId][_goalId].stakedAmount;
 
             emit GoalFailed(userId, _goalId);
         }
-        // Mark the goal as expired
-        goals[_goalId].expiredAndRewardsClaimed = true;
-
-        // Clear the uncompletedUsers array
-        delete goals[_goalId].uncompletedUsers;
     }
-    // Function to mark a user as having passed the goal
-    function passGoal(uint _userId, uint _goalId) public onlyOwner markFailedIfExpired(_goalId) {
-        // Ensure the user has participated in the goal
-        require(userParticipatedInGoal[_userId][_goalId], "User must have participated in the goal");
 
-        // Ensure the user has not already been marked as failed
-        require(!goalParticipations[_userId][_goalId].failed, "User must not be marked as failed");
+    // Clear the uncompletedUsers array
+    delete goals[_goalId].uncompletedUsers;
+}
 
-        // Mark the user as passed in the goalParticipations mapping
-        goalParticipations[_userId][_goalId].passed = true;
+function passGoal(uint _userId, uint _goalId) public onlyOwner markFailedIfExpired(_goalId) {
+    // Hardcoded user activity data
+    string memory userActivityName = HARDCODED_ACTIVITY_NAME;
+    uint userActivityDistance = HARDCODED_ACTIVITY_DISTANCE;
+    uint userActivityElapsedTime = HARDCODED_ACTIVITY_ELAPSED_TIME;
 
-        // Increment the successfulParticipants count for the goal
-        goals[_goalId].successfulParticipants++;
+    // Ensure the user has participated in the goal
+    require(userParticipatedInGoal[_userId][_goalId], "User must have participated in the goal");
 
-        // Decrement the uncompletedUsersCount for the goal
-        goals[_goalId].uncompletedUsersCount--;
+    // Ensure the user has not already been marked as failed
+    require(!goalParticipations[_userId][_goalId].failed, "User must not be marked as failed");
 
-        // Emit an event for passing the goal
-        emit PassedGoal(_userId, _goalId);
-    }
+    // Check conditions based on hardcoded data
+    require(keccak256(abi.encodePacked(userActivityName)) == keccak256(abi.encodePacked(goals[_goalId].title)), "User activity name must match the goal name");
+    require(userActivityElapsedTime <= goals[_goalId].expiryDate, "User activity elapsed time must not exceed goal's expiry date");
+    require(userActivityDistance >= goals[_goalId].stake, "User activity distance must be equal or greater than the goal's stake");
+
+    // Mark the user as passed in the goalParticipations mapping
+    goalParticipations[_userId][_goalId].passed = true;
+
+    // Increment the successfulParticipants count for the goal
+    goals[_goalId].successfulParticipants++;
+
+    // Decrement the uncompletedUsersCount for the goal
+    goals[_goalId].uncompletedUsersCount--;
+
+    // Emit an event for passing the goal
+    emit PassedGoal(_userId, _goalId);
+}
+
     // Function to allow a user to claim rewards after completing a goal
     function claimRewards(uint _userId, uint _goalId, address _tokenAddress) public {
         // Ensure the goal has expired
-        //require(block.timestamp >= goals[_goalId].expiryDate, "Tokens can only be claimed after the goal has expired");
+        // require(block.timestamp >= goals[_goalId].expiryDate, "Tokens can only be claimed after the goal has expired");
 
         // If the goal is expired and not completed, mark uncompleted users as failed
         if (goals[_goalId].expiryDate <= block.timestamp){
@@ -221,9 +251,6 @@ contract UpGoaled is Ownable {
         uint totalFailedStake = goals[_goalId].totalFailedStake;
         uint successfulParticipants = goals[_goalId].successfulParticipants;
         uint userRewards = (stakedAmount + totalFailedStake) / successfulParticipants;
-        
-        // Decrease the goal's stake by the user's stake.
-        goals[_goalId].stake -= stakedAmount;
 
         // Transfer the rewards to the user
         IERC20 token = IERC20(_tokenAddress);
