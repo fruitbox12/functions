@@ -1,0 +1,198 @@
+<!--Last updated 4/17/2023-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>title</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
+</head>
+<body>
+    <button id="connect-button">Connect Metamask</button>
+    <button id="send-button">Send Transaction</button>
+    <button id="send-token-button">Send ERC20 Token</button>
+    <script>
+        // Declare account variable outside the first button's callback function
+
+        window.account;
+
+        document.getElementById('connect-button').addEventListener('click', event => {
+            let button = event.target;
+            ethereum.request({ method: 'eth_requestAccounts' }).then(accounts => {
+                window.account = accounts[0];
+                console.log(window.account);
+                button.textContent = window.account;
+
+                ethereum
+                    .request({ method: 'eth_getBalance', params: [window.account, 'latest'] })
+                    .then(result => {
+                        console.log(result);
+                        let wei = parseInt(result, 16);
+                        let balance = wei / 10 ** 18;
+                        console.log(balance + ' ETH');
+                    });
+            });
+        });
+
+        document.getElementById('send-button').addEventListener('click', event => {
+            let transactionParam = {
+                // Contract address
+                to: '0x436A477A6d51C622916230BCECe7Bb309cF500db',
+                // calling 'window.account' instead of 'account'
+                from: window.account,
+                // amount you wish to send, converted from Ether to wei to Hex. In this case .001 ETH
+                value: '38D7EA4C68000'
+            };
+
+            // Use eth_sendTransaction instead of eth_spendTransaction
+            ethereum.request({method: 'eth_sendTransaction', params:[transactionParam]}).then(txhash => {
+                console.log(txhash);
+            });
+        });
+
+
+        const tokenAddress = '0x4606Ec48Ba23B1f8EbEB3FC1c70b1775dFBA9A8A'; // Replace with the deployed token contract address
+        const tokenABI = [
+        // Add the ABI for the Token contract here
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "name",
+            "outputs": [
+            {
+                "name": "",
+                "type": "string"
+            }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "decimals",
+            "outputs": [
+            {
+                "name": "",
+                "type": "uint8"
+            }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "symbol",
+            "outputs": [
+            {
+                "name": "",
+                "type": "string"
+            }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [
+            {
+                "name": "owner",
+                "type": "address"
+            }
+            ],
+            "name": "balanceOf",
+            "outputs": [
+            {
+                "name": "",
+                "type": "uint256"
+            }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+            {
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "name": "value",
+                "type": "uint256"
+            }
+            ],
+            "name": "transfer",
+            "outputs": [
+            {
+                "name": "",
+                "type": "bool"
+            }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+            {
+                "name": "account",
+                "type": "address"
+            },
+            {
+                "name": "amount",
+                "type": "uint256"
+            }
+            ],
+            "name": "mint",
+            "outputs": [
+            {
+                "name": "",
+                "type": "bool"
+            }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        }
+        ];
+
+        document.getElementById('send-token-button').addEventListener('click', async () => {
+            if (!window.ethereum || !window.account) {
+                console.log('Metamask is not connected. Please connect first.');
+                return;
+            }
+
+            const amountToSend = 1; // Change this to the amount of tokens you want to send
+            const decimals = 0; // Change this to the number of decimals of your token
+
+            const web3 = new Web3(window.ethereum);
+            const tokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
+            const mainContractAddress = '0x436A477A6d51C622916230BCECe7Bb309cF500db';
+
+            const value = amountToSend * (10 ** decimals);
+
+            tokenContract.methods.transfer(mainContractAddress, value).send({ from: window.account })
+                .on('transactionHash', (hash) => {
+                    console.log('Transaction Hash:', hash);
+                })
+                .on('receipt', (receipt) => {
+                    console.log('Receipt:', receipt);
+                })
+                .on('error', (error, receipt) => {
+                    console.log('Error:', error);
+                    console.log('Receipt:', receipt);
+                });
+        });
+
+    </script>
+</body>
+</html>
+
