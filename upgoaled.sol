@@ -1,7 +1,4 @@
-//last modified 4:30pm 22/04/21
-
-//need to comment out the block timestaamp at line 202 if you want to test the withdraw fucntion and bypass the timestamp
-
+//last modified 9:00pm 22/04/21
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -16,7 +13,6 @@ contract UpGoaled is Ownable {
         address userAddress; // Wallet address of the user
         uint[] goals; // List of goal IDs associated with the user
     }
-
     // Goal struct to store goal information
     struct Goal {
         string title;
@@ -28,14 +24,13 @@ contract UpGoaled is Ownable {
         uint expiryDate;
         uint uncompletedUsersCount;
         uint[] uncompletedUsers;
+        bool expiredAndRewardsClaimed;
     }
-
     // GoalPool struct to store goal pool information
     struct GoalPool {
         string name; // Name of the goal pool
         uint[] goals; // List of goal IDs in the goal pool
     }
-
     // GoalParticipation struct to store staked amounts, failed stakes, and claimed rewards
     struct GoalParticipation {
         uint stakedAmount;
@@ -101,7 +96,7 @@ contract UpGoaled is Ownable {
         require(goalPools[_goalPoolId].goals.length < MAX_GOALS_PER_POOL, "Maximum number of goals per pool reached");
 
         goalCount++;
-        goals[goalCount] = Goal(_title, _description, 0, 0, 0, new uint[](0), _expiryDate, 0, new uint[](0));
+        goals[goalCount] = Goal(_title, _description, 0, 0, 0, new uint[](0), _expiryDate, 0, new uint[](0), false);
 
         goalPools[_goalPoolId].goals.push(goalCount);
 
@@ -125,6 +120,8 @@ contract UpGoaled is Ownable {
     }
     // Function for users to join a goal and stake tokens
     function joinGoalAndStake(uint _goalId, uint _stake, address _tokenAddress, uint _userId) public userExists(_userId) {
+        require(!goals[_goalId].expiredAndRewardsClaimed, "Cannot join an expired goal");
+        
         // Add the user to the uncompleted users mapping
         goals[_goalId].uncompletedUsers.push(_userId);
 
@@ -172,6 +169,8 @@ contract UpGoaled is Ownable {
 
             emit GoalFailed(userId, _goalId);
         }
+        // Mark the goal as expired
+        goals[_goalId].expiredAndRewardsClaimed = true;
 
         // Clear the uncompletedUsers array
         delete goals[_goalId].uncompletedUsers;
@@ -199,7 +198,7 @@ contract UpGoaled is Ownable {
     // Function to allow a user to claim rewards after completing a goal
     function claimRewards(uint _userId, uint _goalId, address _tokenAddress) public {
         // Ensure the goal has expired
-        require(block.timestamp >= goals[_goalId].expiryDate, "Tokens can only be claimed after the goal has expired");
+        //require(block.timestamp >= goals[_goalId].expiryDate, "Tokens can only be claimed after the goal has expired");
 
         // If the goal is expired and not completed, mark uncompleted users as failed
         if (goals[_goalId].expiryDate <= block.timestamp){
@@ -222,6 +221,9 @@ contract UpGoaled is Ownable {
         uint totalFailedStake = goals[_goalId].totalFailedStake;
         uint successfulParticipants = goals[_goalId].successfulParticipants;
         uint userRewards = (stakedAmount + totalFailedStake) / successfulParticipants;
+        
+        // Decrease the goal's stake by the user's stake.
+        goals[_goalId].stake -= stakedAmount;
 
         // Transfer the rewards to the user
         IERC20 token = IERC20(_tokenAddress);
