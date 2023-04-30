@@ -5,8 +5,6 @@
 <head>
     <meta charset="UTF-8" />
     <title>title</title>
-    <link rel="stylesheet" type="text/css" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
 </head>
 <body>
     <button id="connect-button">Connect Metamask</button>
@@ -38,7 +36,7 @@
         document.getElementById('send-button').addEventListener('click', event => {
             let transactionParam = {
                 // Contract address
-                to: '0x436A477A6d51C622916230BCECe7Bb309cF500db',
+                to: '0xB4E3eE686b0366A72ca462cBc36a811De24113CD',
                 // calling 'window.account' instead of 'account'
                 from: window.account,
                 // amount you wish to send, converted from Ether to wei to Hex. In this case .001 ETH
@@ -52,7 +50,7 @@
         });
 
 
-        const tokenAddress = '0x4606Ec48Ba23B1f8EbEB3FC1c70b1775dFBA9A8A'; // Replace with the deployed token contract address
+        const tokenAddress = '0x41a2582885E659A182c00dFD807740D306E63D4B'; // Replace with the deployed token contract address
         const tokenABI = [
         // Add the ABI for the Token contract here
         {
@@ -175,7 +173,7 @@
 
             const web3 = new Web3(window.ethereum);
             const tokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
-            const mainContractAddress = '0x436A477A6d51C622916230BCECe7Bb309cF500db';
+            const mainContractAddress = '0xB4E3eE686b0366A72ca462cBc36a811De24113CD';
 
             const value = amountToSend * (10 ** decimals);
 
