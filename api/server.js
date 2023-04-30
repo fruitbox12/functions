@@ -8,14 +8,17 @@ app.use(express.static('public'));
 app.use(express.json());
 
 app.post('/refresh_token', async (req, res) => {
-  // const refreshToken = req.body.refresh_token;
+  const baseURL =
+    process.env.NODE_ENV === 'production'
+      ? `https://${process.env.VERCEL_DOMAIN}`
+      : 'http://localhost';
 
   try {
-    const response = await axios.post('https://www.strava.com/oauth/token', {
-      client_id: '105800',
-      client_secret: 'e45197ee2776af37bebb66a16e5bcfed1b9052e7',
+    const response = await axios.post(`${baseURL}/oauth/token`, {
+      client_id: process.env.CLIENT_ID,
+      client_secret: process.env.CLIENT_SECRET,
       grant_type: 'refresh_token',
-      refresh_token: '8d9bd423574b021bcf884074057a161a773066fa',
+      refresh_token: process.env.REFRESH_TOKEN,
     });
 
     res.json(response.data);
@@ -25,5 +28,5 @@ app.post('/refresh_token', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server listening at http://localhost:\${port}`);
+  console.log(`Server listening at ${baseURL}:${port}`);
 });
