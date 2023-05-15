@@ -5,7 +5,7 @@ const qs = require('qs');
 const app = express();
 
 // Define the callback route for Strava API
-app.get('/callback', async (req, res) => {
+app.post('/callback', async (req, res) => {
   try {
     const { code } = req.query;
 
