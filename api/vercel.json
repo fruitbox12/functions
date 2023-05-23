@@ -17,10 +17,5 @@
         }
       ]
     }
-  ],
-  "functions": {
-    "api/top-tracks.js": {
-      "runtime": "nodejs14.x"
-    }
-  }
+  ]
 }
